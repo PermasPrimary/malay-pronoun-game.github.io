@@ -72,23 +72,33 @@
         let score = 0;
         let lives = 3;
         let lastQuestion = null;
+
+        // 定义所有可接受的答案组
+        const answerGroups = {
+            dia: ['dia', 'Dia'],
+            mereka: ['mereka', 'Mereka'],
+            beliau: ['beliau', 'Beliau'],
+            nya: ['-nya', 'nya']
+        };
+
         const wordPairs = [
-            ['dia', 'Sandra membawa bekal makanan. _______ makan bersama-sama Zhi Ying.'],
-            ['mereka', 'Amira dan Zhi Ying berkawan baik. _______ belajar di Kelas 2 Mawar.'],
-            ['beliau', 'Cikgu Wong guru kelas Anand dan Fendi. _______ mengajarkan Bahasa Melayu.'],
-            ['mereka', 'Anand dan Fendi bermain bola sepak. _______ bermain di padang sekolah.'],
-            ['Beliau', 'Nenek sedang tidur. _______ tidak suka diganggu.'],
-            ['Dia', 'Ramli rajin belajar. _______ selalu mendapat keputusan yang cemerlang.'],
-            ['mereka', 'Ai Lin dan Zita sedang menunggu _______ kawan di luar sekolah.'],
-            ['Dia', '_______ sedang membaca buku di dalam biliknya.'],
-            ['Mereka', 'Murid-murid beratur di kantin. _______ hendak membeli makanan.'],
-            ['Beliau', 'Encik Wong ialah seorang Guru Besar. _______ bertugas di SJK(C) Union.'],
-            ['Mereka', '_______ sedang bermain guli di halaman rumah.'],
-            ['Beliau', '_______ ialah ketua kampung kami.'],
-            ['Mereka', '_______ bermain ting-ting di padang.'],
-            ['-nya', 'Hani mengambil raket _______ lalu menuju ke gelanggang badminton.'],
-            ['Beliau', 'Cikgu Amir guru kelas saya. _______ berasal dari Pahang.']
+            [['dia', 'Dia'], 'Sandra membawa bekal makanan. _______ makan bersama-sama Zhi Ying.'],
+            [['mereka', 'Mereka'], 'Amira dan Zhi Ying berkawan baik. _______ belajar di Kelas 2 Mawar.'],
+            [['beliau', 'Beliau'], 'Cikgu Wong guru kelas Anand dan Fendi. _______ mengajarkan Bahasa Melayu.'],
+            [['mereka', 'Mereka'], 'Anand dan Fendi bermain bola sepak. _______ bermain di padang sekolah.'],
+            [['beliau', 'Beliau'], 'Nenek sedang tidur. _______ tidak suka diganggu.'],
+            [['dia', 'Dia'], 'Ramli rajin belajar. _______ selalu mendapat keputusan yang cemerlang.'],
+            [['mereka', 'Mereka'], 'Ai Lin dan Zita sedang menunggu _______ kawan di luar sekolah.'],
+            [['dia', 'Dia'], '_______ sedang membaca buku di dalam biliknya.'],
+            [['mereka', 'Mereka'], 'Murid-murid beratur di kantin. _______ hendak membeli makanan.'],
+            [['beliau', 'Beliau'], 'Encik Wong ialah seorang Guru Besar. _______ bertugas di SJK(C) Union.'],
+            [['mereka', 'Mereka'], '_______ sedang bermain guli di halaman rumah.'],
+            [['beliau', 'Beliau'], '_______ ialah ketua kampung kami.'],
+            [['mereka', 'Mereka'], '_______ bermain ting-ting di padang.'],
+            [['-nya', 'nya'], 'Hani mengambil raket _______ lalu menuju ke gelanggang badminton.'],
+            [['beliau', 'Beliau'], 'Cikgu Amir guru kelas saya. _______ berasal dari Pahang.']
         ];
+        
         let currentQuestion = null;
         let zombies = [];
 
@@ -98,6 +108,21 @@
 
         function updateLives() {
             document.getElementById('lives').textContent = `生命值: ${'❤️'.repeat(lives)}`;
+        }
+
+        function checkAnswer(clickedWord, correctAnswers) {
+            // 将点击的单词转换为小写
+            clickedWord = clickedWord.toLowerCase();
+            
+            // 检查每个答案组
+            for (let group in answerGroups) {
+                // 如果正确答案属于这个组，并且点击的单词也在这个组中
+                if (answerGroups[group].some(ans => correctAnswers.includes(ans)) &&
+                    answerGroups[group].includes(clickedWord)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         function createZombie(word, isAnswer) {
@@ -118,7 +143,7 @@
             zombie.appendChild(emojiDiv);
             
             zombie.onclick = () => {
-                if (isAnswer) {
+                if (checkAnswer(word, currentQuestion[0])) {
                     score++;
                     updateScore();
                     zombie.remove();
@@ -147,7 +172,7 @@
             lastQuestion = pair;
             currentQuestion = pair;
             document.querySelector('.question').textContent = pair[1];
-            createZombie(pair[0], true);
+            createZombie(pair[0][Math.floor(Math.random() * pair[0].length)], true);
         }
 
         function moveZombies() {
@@ -169,10 +194,12 @@
 
         function generateWrongZombie() {
             let wrongWord;
+            let wrongGroup;
             do {
                 const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-                wrongWord = randomPair[0];
-            } while (currentQuestion && wrongWord === currentQuestion[0]);
+                wrongGroup = randomPair[0];
+                wrongWord = wrongGroup[Math.floor(Math.random() * wrongGroup.length)];
+            } while (checkAnswer(wrongWord, currentQuestion[0]));
             
             createZombie(wrongWord, false);
         }
