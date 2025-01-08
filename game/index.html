@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>马来语代词练习游戏</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        .status-bar {
+            background-color: #333;
+            padding: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 100;
+        }
+        .question {
+            background-color: rgba(51, 51, 51, 0.9);
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            position: absolute;
+            width: 100%;
+            top: 60px;
+            z-index: 90;
+        }
+        .zombie {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+            z-index: 1;
+        }
+        .zombie:hover {
+            transform: scale(1.1);
+        }
+        .zombie-word {
+            background-color: #2b7a2b;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .zombie-emoji {
+            font-size: 2rem;
+        }
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            z-index: 100;
+        }
+    </style>
+    <script>
+        let score = 0;
+        let lives = 3;
+        let lastQuestion = null;
+        const wordPairs = [
+            ['dia', 'Sandra membawa bekal makanan. _______ makan bersama-sama Zhi Ying.'],
+            ['mereka', 'Amira dan Zhi Ying berkawan baik. _______ belajar di Kelas 2 Mawar.'],
+            ['beliau', 'Cikgu Wong guru kelas Anand dan Fendi. _______ mengajarkan Bahasa Melayu.'],
+            ['mereka', 'Anand dan Fendi bermain bola sepak. _______ bermain di padang sekolah.'],
+            ['Beliau', 'Nenek sedang tidur. _______ tidak suka diganggu.'],
+            ['Dia', 'Ramli rajin belajar. _______ selalu mendapat keputusan yang cemerlang.'],
+            ['mereka', 'Ai Lin dan Zita sedang menunggu _______ kawan di luar sekolah.'],
+            ['Dia', '_______ sedang membaca buku di dalam biliknya.'],
+            ['Mereka', 'Murid-murid beratur di kantin. _______ hendak membeli makanan.'],
+            ['Beliau', 'Encik Wong ialah seorang Guru Besar. _______ bertugas di SJK(C) Union.'],
+            ['Mereka', '_______ sedang bermain guli di halaman rumah.'],
+            ['Beliau', '_______ ialah ketua kampung kami.'],
+            ['Mereka', '_______ bermain ting-ting di padang.'],
+            ['-nya', 'Hani mengambil raket _______ lalu menuju ke gelanggang badminton.'],
+            ['Beliau', 'Cikgu Amir guru kelas saya. _______ berasal dari Pahang.']
+        ];
+        let currentQuestion = null;
+        let zombies = [];
+
+        function updateScore() {
+            document.getElementById('score').textContent = `分数: ${score}`;
+        }
+
+        function updateLives() {
+            document.getElementById('lives').textContent = `生命值: ${'❤️'.repeat(lives)}`;
+        }
+
+        function createZombie(word, isAnswer) {
+            const zombie = document.createElement('div');
+            zombie.className = 'zombie';
+            zombie.style.left = Math.random() * 80 + 10 + '%';
+            zombie.style.top = '-50px';
+            
+            const wordDiv = document.createElement('div');
+            wordDiv.className = 'zombie-word';
+            wordDiv.textContent = word;
+            
+            const emojiDiv = document.createElement('div');
+            emojiDiv.className = 'zombie-emoji';
+            emojiDiv.textContent = '🧟';
+            
+            zombie.appendChild(wordDiv);
+            zombie.appendChild(emojiDiv);
+            
+            zombie.onclick = () => {
+                if (isAnswer) {
+                    score++;
+                    updateScore();
+                    zombie.remove();
+                    generateQuestion();
+                } else {
+                    lives--;
+                    updateLives();
+                    zombie.remove();
+                    if (lives <= 0) {
+                        alert('游戏结束！\n最终得分: ' + score);
+                        resetGame();
+                    }
+                }
+            };
+            
+            document.querySelector('.game-container').appendChild(zombie);
+            return zombie;
+        }
+
+        function generateQuestion() {
+            let pair;
+            do {
+                pair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            } while (lastQuestion && pair[1] === lastQuestion[1]);
+            
+            lastQuestion = pair;
+            currentQuestion = pair;
+            document.querySelector('.question').textContent = pair[1];
+            createZombie(pair[0], true);
+        }
+
+        function moveZombies() {
+            document.querySelectorAll('.zombie').forEach(zombie => {
+                const top = parseFloat(zombie.style.top);
+                if (top > window.innerHeight) {
+                    lives--;
+                    updateLives();
+                    zombie.remove();
+                    if (lives <= 0) {
+                        alert('游戏结束！\n最终得分: ' + score);
+                        resetGame();
+                    }
+                } else {
+                    zombie.style.top = (top + 3) + 'px';
+                }
+            });
+        }
+
+        function generateWrongZombie() {
+            let wrongWord;
+            do {
+                const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+                wrongWord = randomPair[0];
+            } while (currentQuestion && wrongWord === currentQuestion[0]);
+            
+            createZombie(wrongWord, false);
+        }
+
+        function resetGame() {
+            score = 0;
+            lives = 3;
+            lastQuestion = null;
+            updateScore();
+            updateLives();
+            document.querySelectorAll('.zombie').forEach(z => z.remove());
+            generateQuestion();
+        }
+
+        window.onload = () => {
+            updateScore();
+            updateLives();
+            generateQuestion();
+            
+            setInterval(generateWrongZombie, 2000);
+            setInterval(moveZombies, 50);
+        };
+    </script>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status-bar">
+            <div id="lives">生命值: ❤️❤️❤️</div>
+            <div id="score">分数: 0</div>
+        </div>
+        
+        <div class="question">
+            选择正确的代词填空
+        </div>
+
+        <a href="../" class="back-button">返回主页</a>
+    </div>
+</body>
+</html>
